@@ -35,7 +35,6 @@ public class StudentController {
     public ResponseEntity<String> setStudent(@RequestBody StudentDTO studentDTO) {
         Student student = studentMapper.toStudent(studentDTO);
         studentRepository.save(student);
-
         return ResponseEntity.ok().body("Student saved successfully");
     }
 
@@ -49,10 +48,6 @@ public class StudentController {
     @PostMapping("/studentCourse")
     public ResponseEntity<String> setStudentCourse(@RequestParam Long studentNumber, @RequestParam int courseCode, @RequestBody StudentCourseDTO studentCourseDTO) {
 
-        StudentCourse studentCourse = studentCourseMapper.toStudentCourse(studentCourseDTO);
-        studentCourse.setStudent(studentRepository.findStudentByStudentNumber(studentNumber).get());
-        studentCourse.setCourse(courseRepository.findCourseByCourseCode(courseCode));
-        studentCourseRepository.save(studentCourse);
         return ResponseEntity.ok().body("Student Course saved successfully");
     }
 }
