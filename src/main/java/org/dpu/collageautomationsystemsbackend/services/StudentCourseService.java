@@ -13,7 +13,9 @@ import org.dpu.collageautomationsystemsbackend.repository.StudentCourseRepositor
 import org.dpu.collageautomationsystemsbackend.repository.StudentRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,30 +41,49 @@ public class StudentCourseService {
         return studentCourseRepository.save(studentCourse);
     }
 
-    public List<StudentCourse> getAllStudentCourses() {
-        return studentCourseRepository.findAll();
+    public List<StudentCourse> getStudentCoursesByStudentId(Long studentId) {
+        Student student = studentRepository.findStudentByStudentNumber(studentId)
+                .orElseThrow(() -> new AppException("Student not found with id: " + studentId, HttpStatus.NOT_FOUND));
+        return studentCourseRepository.findByStudent(student);
     }
 
-    public StudentCourse getStudentCourseById(Long studentCourseId) {
-        return studentCourseRepository.findById(studentCourseId)
-                .orElseThrow(() -> new AppException("Student course not found with id: " + studentCourseId,HttpStatus.NOT_FOUND));
-    }
+    public StudentCourse updateStudentCourse(Long studentCourseId, StudentCourseDTO studentCourseDTO, Long studentId, int courseCode) {
+        StudentCourse existingStudentCourse = studentCourseRepository
+                .findById(studentCourseId)
+                .orElseThrow(() -> new AppException("Student Course not found with id: " + studentCourseId, HttpStatus.NOT_FOUND));
 
-    public StudentCourse updateStudentCourse(Long studentCourseId, StudentCourseDTO studentCourseDTO) {
-        StudentCourse existingStudentCourse = getStudentCourseById(studentCourseId);
-        StudentCourse updatedStudentCourse = studentCourseMapper.toStudentCourse(studentCourseDTO);
-        updatedStudentCourse.setId(existingStudentCourse.getId());
-        return studentCourseRepository.save(updatedStudentCourse);
+        Student student = studentRepository.findStudentByStudentNumber(studentId)
+                .orElseThrow(() -> new AppException("Student not found with id: " + studentId, HttpStatus.NOT_FOUND));
+
+        Course course = courseRepository.findCourseByCourseCode(courseCode)
+                .orElseThrow(() -> new AppException("Course not found with code: " + courseCode, HttpStatus.NOT_FOUND));
+
+        existingStudentCourse = studentCourseMapper.toStudentCourse(studentCourseDTO);
+        existingStudentCourse.setStudent(student);
+        existingStudentCourse.setCourse(course);
+        return studentCourseRepository.save(existingStudentCourse);
     }
 
     public void deleteStudentCourse(Long studentCourseId) {
         studentCourseRepository.deleteById(studentCourseId);
     }
 
-    public List<StudentCourse> saveAllStudentCourses(List<StudentCourseDTO> studentCourseDTOs, Long studentId, int courseCode) {
-        List<StudentCourse> studentCourses = studentCourseDTOs.stream()
-                .map(studentCourseDTO -> saveStudentCourse(studentCourseDTO, studentId, courseCode))
-                .collect(Collectors.toList());
+    @Transactional
+    public List<StudentCourse> saveAllStudentCourses(List<StudentCourseDTO> studentCourseDTOs, Long studentId) {
+        Student student = studentRepository.findStudentByStudentNumber(studentId)
+                .orElseThrow(() -> new AppException("Student not found with id: " + studentId, HttpStatus.NOT_FOUND));
+
+        List<StudentCourse> studentCourses = new ArrayList<>();
+        for (StudentCourseDTO studentCourseDTO : studentCourseDTOs) {
+            Course course = courseRepository.findCourseByCourseCode(studentCourseDTO.course().courseCode())
+                    .orElseThrow(() -> new AppException("Course not found with code: " + studentCourseDTO.course().courseCode(), HttpStatus.NOT_FOUND));
+
+            StudentCourse studentCourse = studentCourseMapper.toStudentCourse(studentCourseDTO);
+            studentCourse.setStudent(student);
+            studentCourse.setCourse(course);
+            studentCourses.add(studentCourse);
+        }
+
         return studentCourseRepository.saveAll(studentCourses);
     }
 }

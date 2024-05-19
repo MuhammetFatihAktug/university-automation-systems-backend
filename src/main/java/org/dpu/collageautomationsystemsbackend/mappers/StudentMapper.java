@@ -7,7 +7,7 @@ import org.dpu.collageautomationsystemsbackend.entities.student.Student;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import java.util.Optional;
+import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface StudentMapper {
@@ -16,5 +16,11 @@ public interface StudentMapper {
     @Mapping(target = "password", ignore = true)
     Student signUpToStudent(SignUpDto signUpDto);
 
+
     Student toStudent(StudentDTO studentDTO);
+
+    @Mapping(target = "studentNumber", ignore = true)
+    void toStudent(StudentDTO studentDTO, Student student);
+
+    List<StudentDTO> toStudentDTO(List<Student> students);
 }
