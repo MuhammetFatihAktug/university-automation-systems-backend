@@ -8,6 +8,7 @@ import org.dpu.collageautomationsystemsbackend.entities.student.Student;
 import org.dpu.collageautomationsystemsbackend.entities.student.StudentCourse;
 import org.dpu.collageautomationsystemsbackend.exception.AppException;
 import org.dpu.collageautomationsystemsbackend.mappers.StudentCourseMapper;
+import org.dpu.collageautomationsystemsbackend.mappers.StudentMapper;
 import org.dpu.collageautomationsystemsbackend.repository.CourseRepository;
 import org.dpu.collageautomationsystemsbackend.repository.StudentCourseRepository;
 import org.dpu.collageautomationsystemsbackend.repository.StudentRepository;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,16 +26,14 @@ import java.util.stream.Collectors;
 public class StudentCourseService {
 
     private final StudentCourseRepository studentCourseRepository;
-    private final CourseRepository courseRepository;
-    private final StudentRepository studentRepository;
+    private final CourseService courseService;
+    private final StudentService studentService;
+    private final StudentMapper studentMapper;
     private final StudentCourseMapper studentCourseMapper;
 
     public StudentCourse saveStudentCourse(StudentCourseDTO studentCourseDTO, Long studentId, int courseCode) {
-        Student student = studentRepository.findStudentByStudentNumber(studentId)
-                .orElseThrow(() -> new AppException("Student not found with id: " + studentId, HttpStatus.NOT_FOUND));
-
-        Course course = courseRepository.findCourseByCourseCode(courseCode)
-                .orElseThrow(() -> new AppException("Course not found with code: " + courseCode, HttpStatus.NOT_FOUND));
+        Student student = studentMapper.toStudent(studentService.getStudent(studentId));
+        Course course = courseService.getCourseById(courseCode);
 
         StudentCourse studentCourse = studentCourseMapper.toStudentCourse(studentCourseDTO);
         studentCourse.setStudent(student);
@@ -42,45 +42,53 @@ public class StudentCourseService {
     }
 
     public List<StudentCourse> getStudentCoursesByStudentId(Long studentId) {
-        Student student = studentRepository.findStudentByStudentNumber(studentId)
-                .orElseThrow(() -> new AppException("Student not found with id: " + studentId, HttpStatus.NOT_FOUND));
+        Student student = studentMapper.toStudent(studentService.getStudent(studentId));
         return studentCourseRepository.findByStudent(student);
     }
 
-    public StudentCourse updateStudentCourse(Long studentCourseId, StudentCourseDTO studentCourseDTO, Long studentId, int courseCode) {
-        StudentCourse existingStudentCourse = studentCourseRepository
-                .findById(studentCourseId)
-                .orElseThrow(() -> new AppException("Student Course not found with id: " + studentCourseId, HttpStatus.NOT_FOUND));
+    public StudentCourse updateStudentCourse(Long studentId, int courseCode, StudentCourseDTO studentCourseDTO) {
+        Student student = studentMapper.toStudent(studentService.getStudent(studentId));
 
-        Student student = studentRepository.findStudentByStudentNumber(studentId)
-                .orElseThrow(() -> new AppException("Student not found with id: " + studentId, HttpStatus.NOT_FOUND));
+        Course course = courseService.getCourseById(courseCode);
 
-        Course course = courseRepository.findCourseByCourseCode(courseCode)
-                .orElseThrow(() -> new AppException("Course not found with code: " + courseCode, HttpStatus.NOT_FOUND));
+        StudentCourse existingStudentCourse = studentCourseRepository.findByStudentAndCourse(student, course)
+                .orElseThrow(() -> new AppException("Student Course not found for student id: " + studentId + " and course code: " + courseCode, HttpStatus.NOT_FOUND));
 
-        existingStudentCourse = studentCourseMapper.toStudentCourse(studentCourseDTO);
+        studentCourseMapper.updateStudentCourseFromDTO(studentCourseDTO, existingStudentCourse);
+
         existingStudentCourse.setStudent(student);
         existingStudentCourse.setCourse(course);
+
         return studentCourseRepository.save(existingStudentCourse);
     }
 
-    public void deleteStudentCourse(Long studentCourseId) {
-        studentCourseRepository.deleteById(studentCourseId);
+    public void deleteStudentCourse(Long studentId, int courseCode) {
+        Student student = studentMapper.toStudent(studentService.getStudent(studentId));
+        Course course = courseService.getCourseById(courseCode);
+
+        Optional<StudentCourse> studentCourse = studentCourseRepository.findByStudentAndCourse(student, course);
+        studentCourse.ifPresentOrElse(
+                studentCourseRepository::delete,
+                () -> {
+                    throw new AppException("StudentCourse not found with studentId: " + studentId + " and courseCode: " + courseCode, HttpStatus.NOT_FOUND);
+                }
+        );
     }
 
     @Transactional
     public List<StudentCourse> saveAllStudentCourses(List<StudentCourseDTO> studentCourseDTOs, Long studentId) {
-        Student student = studentRepository.findStudentByStudentNumber(studentId)
-                .orElseThrow(() -> new AppException("Student not found with id: " + studentId, HttpStatus.NOT_FOUND));
-
+        Student student = studentMapper.toStudent(studentService.getStudent(studentId));
         List<StudentCourse> studentCourses = new ArrayList<>();
+
         for (StudentCourseDTO studentCourseDTO : studentCourseDTOs) {
-            Course course = courseRepository.findCourseByCourseCode(studentCourseDTO.course().courseCode())
-                    .orElseThrow(() -> new AppException("Course not found with code: " + studentCourseDTO.course().courseCode(), HttpStatus.NOT_FOUND));
+            int courseCode = studentCourseDTO.course().courseCode();
+            Course course = courseService.getCourseById(courseCode);
 
             StudentCourse studentCourse = studentCourseMapper.toStudentCourse(studentCourseDTO);
+
             studentCourse.setStudent(student);
             studentCourse.setCourse(course);
+
             studentCourses.add(studentCourse);
         }
 

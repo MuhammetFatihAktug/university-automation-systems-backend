@@ -21,14 +21,14 @@ public class ManagerService {
     private final PasswordEncoder passwordEncoder;
     private final StudentMapper studentMapper;
 
-    public StudentDto registerStudent(SignUpDto signUpDto) {
-        Optional<Student> optionalStudent = studentRepository.findStudentByStudentNumber(1213123L);
-        if (optionalStudent.isPresent()) {
-            throw new AppException("Login already exists", HttpStatus.BAD_REQUEST);
-        }
-        Student student = studentMapper.signUpToStudent(signUpDto);
-        student.setPassword(passwordEncoder.encode(CharBuffer.wrap(signUpDto.password())));
-        Student savedStudent = studentRepository.save(student);
-        return studentMapper.toStudentDto(savedStudent);
-    }
+//    public StudentDto registerStudent(SignUpDto signUpDto) {
+//        Optional<Student> optionalStudent = studentRepository.findStudentByStudentNumber(1213123L);
+//        if (optionalStudent.isPresent()) {
+//            throw new AppException("Login already exists", HttpStatus.BAD_REQUEST);
+//        }
+//        Student student = studentMapper.signUpToStudent(signUpDto);
+//        student.setPassword(passwordEncoder.encode(CharBuffer.wrap(signUpDto.password())));
+//        Student savedStudent = studentRepository.save(student);
+//        return studentMapper.toStudentDto(savedStudent);
+//    }
 }

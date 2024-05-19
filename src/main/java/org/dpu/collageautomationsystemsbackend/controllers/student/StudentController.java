@@ -2,52 +2,44 @@ package org.dpu.collageautomationsystemsbackend.controllers.student;
 
 
 import lombok.RequiredArgsConstructor;
-import org.dpu.collageautomationsystemsbackend.dto.CourseDTO;
-import org.dpu.collageautomationsystemsbackend.dto.StudentCourseDTO;
 import org.dpu.collageautomationsystemsbackend.dto.StudentDTO;
-import org.dpu.collageautomationsystemsbackend.entities.student.Course;
 import org.dpu.collageautomationsystemsbackend.entities.student.Student;
-import org.dpu.collageautomationsystemsbackend.entities.student.StudentCourse;
-import org.dpu.collageautomationsystemsbackend.mappers.CourseMapper;
-import org.dpu.collageautomationsystemsbackend.mappers.StudentCourseMapper;
-import org.dpu.collageautomationsystemsbackend.mappers.StudentMapper;
-import org.dpu.collageautomationsystemsbackend.repository.CourseRepository;
-import org.dpu.collageautomationsystemsbackend.repository.StudentCourseRepository;
-import org.dpu.collageautomationsystemsbackend.repository.StudentRepository;
+import org.dpu.collageautomationsystemsbackend.services.StudentService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
+import java.util.List;
 
 @RestController
+@RequestMapping("/students")
 @RequiredArgsConstructor
 @CrossOrigin(origins = {"http://localhost:4200", "http://192.168.1.6:8080"})
 public class StudentController {
 
-    private final StudentRepository studentRepository;
-    private final CourseRepository courseRepository;
-    private final StudentCourseRepository studentCourseRepository;
-    private final StudentMapper studentMapper;
-    private final CourseMapper courseMapper;
-    private final StudentCourseMapper studentCourseMapper;
+    private final StudentService studentService;
 
-    @PostMapping("/student")
-    public ResponseEntity<String> setStudent(@RequestBody StudentDTO studentDTO) {
-        Student student = studentMapper.toStudent(studentDTO);
-        studentRepository.save(student);
-        return ResponseEntity.ok().body("Student saved successfully");
+    @PostMapping("create")
+    public ResponseEntity<Student> createStudent(@RequestBody StudentDTO studentDTO) {
+        Student createdStudent = studentService.createStudent(studentDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdStudent);
     }
 
-    @PostMapping("/course")
-    public ResponseEntity<String> setCourse(@RequestBody CourseDTO courseDTO) {
-        Course course = courseMapper.toCourse(courseDTO);
-        courseRepository.save(course);
-        return ResponseEntity.ok().body("Course saved successfully");
+    @DeleteMapping("/{studentId}")
+    public ResponseEntity<Boolean> deleteStudent(@PathVariable Long studentId) {
+        studentService.deleteStudent(studentId);
+        return ResponseEntity.ok(true);
     }
 
-    @PostMapping("/studentCourse")
-    public ResponseEntity<String> setStudentCourse(@RequestParam Long studentNumber, @RequestParam int courseCode, @RequestBody StudentCourseDTO studentCourseDTO) {
+    @PutMapping("/{studentId}")
+    public ResponseEntity<Student> updateStudent(@PathVariable Long studentId, @RequestBody StudentDTO studentDTO) {
+        Student updatedStudent = studentService.updateStudent(studentId, studentDTO);
+        return ResponseEntity.ok(updatedStudent);
+    }
 
-        return ResponseEntity.ok().body("Student Course saved successfully");
+    @GetMapping("/allStudent")
+    public ResponseEntity<List<StudentDTO>> getAllStudents() {
+        List<StudentDTO> students = studentService.getAllStudents();
+        return ResponseEntity.ok(students);
     }
 }

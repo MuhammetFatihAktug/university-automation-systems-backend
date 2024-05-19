@@ -11,16 +11,13 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface StudentMapper {
-    StudentDto toStudentDto(Student student);
+    StudentDTO toStudentDto(Student student);
 
     @Mapping(target = "password", ignore = true)
     Student signUpToStudent(SignUpDto signUpDto);
 
 
     Student toStudent(StudentDTO studentDTO);
-
-    @Mapping(target = "studentNumber", ignore = true)
-    void toStudent(StudentDTO studentDTO, Student student);
 
     List<StudentDTO> toStudentDTO(List<Student> students);
 }

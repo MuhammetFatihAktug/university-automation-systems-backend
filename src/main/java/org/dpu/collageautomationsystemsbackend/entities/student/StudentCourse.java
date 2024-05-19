@@ -30,7 +30,7 @@ public class StudentCourse {
     private Student student;
 
     @ManyToOne
-    @JoinColumn(name = "course_code", nullable = false)
+    @JoinColumn(name = "course_code", nullable = false,unique = true)
     private Course course;
 
     @Column(name = "midterm", nullable = false)

@@ -22,7 +22,6 @@ import java.util.List;
 public class StudentService {
 
     private final StudentRepository studentRepository;
-    private final StudentCourseService studentCourseService;
     private final StudentMapper studentMapper;
 
     @Transactional
@@ -42,11 +41,17 @@ public class StudentService {
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new AppException("Student not found with id: " + studentId, HttpStatus.NOT_FOUND));
 
-        studentMapper.toStudent(studentDTO, student);
+        student = studentMapper.toStudent(studentDTO);
 
         return studentRepository.save(student);
     }
 
+    @Transactional(readOnly = true)
+    public StudentDTO getStudent(Long studentId) {
+        Student student = studentRepository.findStudentByStudentNumber(studentId).orElseThrow(() -> new AppException("Student not found ", HttpStatus.NOT_FOUND));
+
+        return studentMapper.toStudentDto(student);
+    }
 
     @Transactional(readOnly = true)
     public List<StudentDTO> getAllStudents() {

@@ -20,15 +20,15 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final StudentMapper studentMapper;
 
-    public StudentDto login(StudentCredentialDto studentCredentialDto) {
-        Student student = studentRepository.findStudentByStudentNumber(123L)
-                .orElseThrow(() -> new AppException("Unknown user", HttpStatus.NOT_FOUND));
-        if (passwordEncoder.matches(CharBuffer.wrap(studentCredentialDto.password()), student.getPassword())) {
-            System.out.println(studentMapper.toStudentDto(student));
-            return studentMapper.toStudentDto(student);
-        }
-        throw new AppException("Invalid password", HttpStatus.BAD_REQUEST);
-    }
+//    public StudentDto login(StudentCredentialDto studentCredentialDto) {
+//        Student student = studentRepository.findStudentByStudentNumber(123L)
+//                .orElseThrow(() -> new AppException("Unknown user", HttpStatus.NOT_FOUND));
+//        if (passwordEncoder.matches(CharBuffer.wrap(studentCredentialDto.password()), student.getPassword())) {
+//            System.out.println(studentMapper.toStudentDto(student));
+//            return studentMapper.toStudentDto(student);
+//        }
+//        throw new AppException("Invalid password", HttpStatus.BAD_REQUEST);
+//    }
 
 
 }
