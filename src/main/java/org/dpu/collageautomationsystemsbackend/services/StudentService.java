@@ -22,7 +22,7 @@ public class StudentService {
     private final StudentMapper studentMapper;
 
     public StudentDto login(StudentCredentialDto studentCredentialDto) {
-        Student student = studentRepository.findByStudentNumber(studentCredentialDto.studentNumber())
+        Student student = studentRepository.findStudentByStudentNumber(123L)
                 .orElseThrow(() -> new AppException("Unknown user", HttpStatus.NOT_FOUND));
         if (passwordEncoder.matches(CharBuffer.wrap(studentCredentialDto.password()), student.getPassword())) {
             System.out.println(studentMapper.toStudentDto(student));
@@ -30,5 +30,6 @@ public class StudentService {
         }
         throw new AppException("Invalid password", HttpStatus.BAD_REQUEST);
     }
+
 
 }

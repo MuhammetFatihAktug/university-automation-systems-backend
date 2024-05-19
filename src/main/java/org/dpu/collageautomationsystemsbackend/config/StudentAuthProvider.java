@@ -31,7 +31,7 @@ public class StudentAuthProvider {
 
     public String createToken(StudentDto studentDto) {
         Date now = new Date();
-        Date validity = new Date(now.getTime() + 3600000);
+        Date validity = new Date(now.getTime() + 10000);
         return JWT.create()
                 .withIssuer(studentDto.getStudentNumber())
                 .withIssuedAt(now)
@@ -39,7 +39,7 @@ public class StudentAuthProvider {
                 .withClaim("studentName", studentDto.getName())
                 .withClaim("studentLastName", studentDto.getLastName())
                 .sign(Algorithm.HMAC256(secretKey));
-
+ 
     }
 
     public Authentication validateToken(String token) {

@@ -22,7 +22,7 @@ public class ManagerService {
     private final StudentMapper studentMapper;
 
     public StudentDto registerStudent(SignUpDto signUpDto) {
-        Optional<Student> optionalStudent = studentRepository.findByStudentNumber(signUpDto.studentNumber());
+        Optional<Student> optionalStudent = studentRepository.findStudentByStudentNumber(1213123L);
         if (optionalStudent.isPresent()) {
             throw new AppException("Login already exists", HttpStatus.BAD_REQUEST);
         }

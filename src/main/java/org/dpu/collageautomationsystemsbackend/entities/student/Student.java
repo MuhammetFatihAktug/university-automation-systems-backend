@@ -1,45 +1,62 @@
 package org.dpu.collageautomationsystemsbackend.entities.student;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
-import java.util.Date;
+import java.util.*;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @Data
 @Entity
+@Table(name = "students")
 public class Student {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "student_id")
+    private Long studentNumber;
 
-    private String studentNumber;
+    @Column(name = "tc")
+    private long tc;
 
-    private String name;
+    @Column(length = 100)
+    private String firstName;
 
+    @Column(length = 100)
     private String lastName;
 
-    private String tc;
-
+    @Column(length = 20)
     private String phoneNumber;
 
+    @Temporal(TemporalType.DATE)
+    private Date birthDate;
 
-    private Date birthDay;
+    @Column(length = 1)
+    private char gender;
 
-    private String gender;
-
+    @Column(columnDefinition = "TEXT")
     private String address;
 
+    private int grade;
 
-    private Date registerDate;
+    @Temporal(TemporalType.DATE)
+    private Date registrationDate;
 
-    @Column(nullable = false)
+    @Column(length = 50)
+    private String curriculum;
+
+    @Column(length = 30)
+    private String studyDurationStatus;
+
+    @Column(length = 10)
+    private String tuitionStatus;
+
+    @OneToMany(mappedBy = "student")
+    private Set<StudentCourse> studentCourses;
+
     private String password;
 }
