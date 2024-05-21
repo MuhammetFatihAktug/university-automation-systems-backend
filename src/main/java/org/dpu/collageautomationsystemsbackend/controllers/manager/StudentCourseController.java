@@ -1,4 +1,4 @@
-package org.dpu.collageautomationsystemsbackend.controllers.student;
+package org.dpu.collageautomationsystemsbackend.controllers.manager;
 
 import lombok.RequiredArgsConstructor;
 import org.dpu.collageautomationsystemsbackend.dto.StudentCourseDTO;

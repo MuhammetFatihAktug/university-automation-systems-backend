@@ -1,17 +1,8 @@
-package org.dpu.collageautomationsystemsbackend.controllers.student;
+package org.dpu.collageautomationsystemsbackend.controllers.user;
 
 
 import lombok.RequiredArgsConstructor;
-import org.dpu.collageautomationsystemsbackend.config.StudentAuthProvider;
-import org.dpu.collageautomationsystemsbackend.dto.SignUpDto;
-import org.dpu.collageautomationsystemsbackend.dto.student.StudentCredentialDto;
-import org.dpu.collageautomationsystemsbackend.dto.student.StudentDto;
-import org.dpu.collageautomationsystemsbackend.services.ManagerService;
-import org.dpu.collageautomationsystemsbackend.services.StudentService;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.net.URI;
 
 @RestController
 @RequiredArgsConstructor
