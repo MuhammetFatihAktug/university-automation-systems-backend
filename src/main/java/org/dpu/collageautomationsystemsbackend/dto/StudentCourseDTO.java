@@ -10,4 +10,5 @@ public record StudentCourseDTO(
         int average,
         String letterGrade,
         String status
-) {}
+) {
+}

@@ -2,11 +2,14 @@ package org.dpu.collageautomationsystemsbackend.services;
 
 
 import lombok.RequiredArgsConstructor;
+import org.dpu.collageautomationsystemsbackend.dto.CourseAbsenceDTO;
 import org.dpu.collageautomationsystemsbackend.dto.StudentCourseDTO;
 import org.dpu.collageautomationsystemsbackend.entities.student.Course;
+import org.dpu.collageautomationsystemsbackend.entities.student.CourseAbsence;
 import org.dpu.collageautomationsystemsbackend.entities.student.Student;
 import org.dpu.collageautomationsystemsbackend.entities.student.StudentCourse;
 import org.dpu.collageautomationsystemsbackend.exception.AppException;
+import org.dpu.collageautomationsystemsbackend.mappers.CourseAbsenceMapper;
 import org.dpu.collageautomationsystemsbackend.mappers.StudentCourseMapper;
 import org.dpu.collageautomationsystemsbackend.mappers.StudentMapper;
 import org.dpu.collageautomationsystemsbackend.repository.CourseRepository;
@@ -16,9 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,37 +32,42 @@ public class StudentCourseService {
     private final StudentMapper studentMapper;
     private final StudentCourseMapper studentCourseMapper;
 
+    @Transactional
     public StudentCourse saveStudentCourse(StudentCourseDTO studentCourseDTO, Long studentId, int courseCode) {
         Student student = studentMapper.toStudent(studentService.getStudent(studentId));
         Course course = courseService.getCourseById(courseCode);
-
         StudentCourse studentCourse = studentCourseMapper.toStudentCourse(studentCourseDTO);
         studentCourse.setStudent(student);
         studentCourse.setCourse(course);
         return studentCourseRepository.save(studentCourse);
     }
 
+    @Transactional
     public List<StudentCourse> getStudentCoursesByStudentId(Long studentId) {
         Student student = studentMapper.toStudent(studentService.getStudent(studentId));
         return studentCourseRepository.findByStudent(student);
     }
 
-    public StudentCourse updateStudentCourse(Long studentId, int courseCode, StudentCourseDTO studentCourseDTO) {
+    @Transactional
+    public StudentCourse getStudentCourseByStudentId(Long studentId, int courseCode) {
         Student student = studentMapper.toStudent(studentService.getStudent(studentId));
-
         Course course = courseService.getCourseById(courseCode);
 
-        StudentCourse existingStudentCourse = studentCourseRepository.findByStudentAndCourse(student, course)
+        return studentCourseRepository.findByStudentAndCourse(student, course)
                 .orElseThrow(() -> new AppException("Student Course not found for student id: " + studentId + " and course code: " + courseCode, HttpStatus.NOT_FOUND));
+    }
+
+    @Transactional
+    public StudentCourse updateStudentCourse(Long studentId, int courseCode, StudentCourseDTO studentCourseDTO) {
+        StudentCourse existingStudentCourse = getStudentCourseByStudentId(studentId, courseCode);
 
         studentCourseMapper.updateStudentCourseFromDTO(studentCourseDTO, existingStudentCourse);
 
-        existingStudentCourse.setStudent(student);
-        existingStudentCourse.setCourse(course);
 
         return studentCourseRepository.save(existingStudentCourse);
     }
 
+    @Transactional
     public void deleteStudentCourse(Long studentId, int courseCode) {
         Student student = studentMapper.toStudent(studentService.getStudent(studentId));
         Course course = courseService.getCourseById(courseCode);
