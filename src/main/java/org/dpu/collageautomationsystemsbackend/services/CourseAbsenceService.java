@@ -1,12 +1,13 @@
 package org.dpu.collageautomationsystemsbackend.services;
 
 import lombok.RequiredArgsConstructor;
-import org.dpu.collageautomationsystemsbackend.entities.student.Course;
 import org.dpu.collageautomationsystemsbackend.entities.student.CourseAbsence;
 import org.dpu.collageautomationsystemsbackend.entities.student.StudentCourse;
 import org.dpu.collageautomationsystemsbackend.repository.CourseAbsenceRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,14 +18,14 @@ public class CourseAbsenceService {
     private final CourseAbsenceRepository courseAbsenceRepository;
     private final StudentCourseService studentCourseService;
 
-    public List<CourseAbsence> getAllAbsences(Long studentNumber, int courseCode) {
-        StudentCourse studentCourse = studentCourseService.getStudentCourseByStudentId(studentNumber, courseCode);
-
-        return courseAbsenceRepository.findByStudentCourse(studentCourse);
+    public List<CourseAbsence> getAllAbsences(Long studentNumber) {
+        List<StudentCourse> studentCourses = studentCourseService.getStudentCoursesByStudentId(studentNumber);
+        return courseAbsenceRepository.findAllByStudentCourses(studentCourses);
     }
 
-    public Optional<CourseAbsence> getAbsenceById(Long id) {
-        return courseAbsenceRepository.findById(id);
+    public List<CourseAbsence> getAbsenceByCourse(Long studentNumber, int courseCode) {
+        StudentCourse studentCourse = studentCourseService.getStudentCourseByStudentId(studentNumber, courseCode);
+        return courseAbsenceRepository.findByStudentCourse(studentCourse);
     }
 
     public CourseAbsence saveAbsence(CourseAbsence absence, Long studentNumber, int courseCode) {
@@ -42,8 +43,9 @@ public class CourseAbsenceService {
         return courseAbsenceRepository.save(absence);
     }
 
-
-    public void deleteAbsence(Long id) {
-        courseAbsenceRepository.deleteById(id);
+    @Transactional
+    public void deleteAbsenceByDateAndStudentCourse(Long studentNumber, int courseCode, Date date) {
+        StudentCourse studentCourse = studentCourseService.getStudentCourseByStudentId(studentNumber, courseCode);
+        courseAbsenceRepository.deleteByStudentCourseAndDate(studentCourse, date);
     }
 }
