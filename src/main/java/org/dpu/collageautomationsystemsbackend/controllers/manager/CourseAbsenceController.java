@@ -14,7 +14,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/absences")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:4200", "http://192.168.1.6:8080"})
+@CrossOrigin(origins = {"http://localhost:4200", "http://192.168.1.6:8080", "http://192.168.56.1:4200"})
 public class CourseAbsenceController {
 
     private final CourseAbsenceService courseAbsenceService;

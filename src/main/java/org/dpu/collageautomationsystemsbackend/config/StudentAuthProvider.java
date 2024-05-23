@@ -6,7 +6,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import org.dpu.collageautomationsystemsbackend.dto.student.StudentDto;
+import org.dpu.collageautomationsystemsbackend.dto.StudentDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -29,17 +29,28 @@ public class StudentAuthProvider {
         secretKey = Base64.getEncoder().encodeToString(secretKey.getBytes());
     }
 
-    public String createToken(StudentDto studentDto) {
+    public String createToken(StudentDTO studentDTO) {
         Date now = new Date();
         Date validity = new Date(now.getTime() + 10000);
         return JWT.create()
-                .withIssuer(studentDto.getStudentNumber())
+                .withIssuer(studentDTO.studentNumber().toString())
                 .withIssuedAt(now)
                 .withExpiresAt(validity)
-                .withClaim("studentName", studentDto.getName())
-                .withClaim("studentLastName", studentDto.getLastName())
+                .withClaim("tc", studentDTO.tc())
+                .withClaim("firstName", studentDTO.firstName())
+                .withClaim("lastName", studentDTO.lastName())
+                .withClaim("phoneNumber", studentDTO.phoneNumber())
+                .withClaim("birthDate", studentDTO.birthDate().getTime())
+                .withClaim("gender", String.valueOf(studentDTO.gender()))
+                .withClaim("address", studentDTO.address())
+                .withClaim("grade", studentDTO.grade())
+                .withClaim("registrationDate", studentDTO.registrationDate().getTime())
+                .withClaim("curriculum", studentDTO.curriculum())
+                .withClaim("studyDurationStatus", studentDTO.studyDurationStatus())
+                .withClaim("tuitionStatus", studentDTO.tuitionStatus())
+                .withClaim("password", studentDTO.password())
                 .sign(Algorithm.HMAC256(secretKey));
- 
+
     }
 
     public Authentication validateToken(String token) {
@@ -47,11 +58,22 @@ public class StudentAuthProvider {
         JWTVerifier verifier = JWT.require(algorithm).build();
         DecodedJWT decodedJWT = verifier.verify(token);
 
-        StudentDto student = StudentDto.builder()
-                .studentNumber(decodedJWT.getIssuer())
-                .name(decodedJWT.getClaim("studentName").asString())
-                .lastName(decodedJWT.getClaim("studentLastName").asString())
-                .build();
+        StudentDTO student = new StudentDTO(
+                Long.parseLong(decodedJWT.getIssuer()),
+                decodedJWT.getClaim("tc").asLong(),
+                decodedJWT.getClaim("firstName").asString(),
+                decodedJWT.getClaim("lastName").asString(),
+                decodedJWT.getClaim("phoneNumber").asString(),
+                new Date(decodedJWT.getClaim("birthDate").asLong()),
+                decodedJWT.getClaim("gender").asString().charAt(0),
+                decodedJWT.getClaim("address").asString(),
+                decodedJWT.getClaim("grade").asInt(),
+                new Date(decodedJWT.getClaim("registrationDate").asLong()),
+                decodedJWT.getClaim("curriculum").asString(),
+                decodedJWT.getClaim("studyDurationStatus").asString(),
+                decodedJWT.getClaim("tuitionStatus").asString(),
+                decodedJWT.getClaim("password").asString()
+        );
 
         return new UsernamePasswordAuthenticationToken(student, null, Collections.emptyList());
     }

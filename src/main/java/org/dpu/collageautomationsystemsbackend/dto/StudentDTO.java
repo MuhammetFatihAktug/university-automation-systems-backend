@@ -17,5 +17,6 @@ public record StudentDTO(
         String studyDurationStatus,
         String tuitionStatus,
         String password
+
 ) {
 }

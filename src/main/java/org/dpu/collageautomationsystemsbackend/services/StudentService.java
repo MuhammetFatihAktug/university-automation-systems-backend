@@ -1,20 +1,15 @@
 package org.dpu.collageautomationsystemsbackend.services;
 
 import lombok.RequiredArgsConstructor;
-import org.dpu.collageautomationsystemsbackend.dto.StudentCourseDTO;
 import org.dpu.collageautomationsystemsbackend.dto.StudentDTO;
-import org.dpu.collageautomationsystemsbackend.dto.student.StudentCredentialDto;
-import org.dpu.collageautomationsystemsbackend.dto.student.StudentDto;
 import org.dpu.collageautomationsystemsbackend.entities.student.Student;
 import org.dpu.collageautomationsystemsbackend.exception.AppException;
 import org.dpu.collageautomationsystemsbackend.mappers.StudentMapper;
 import org.dpu.collageautomationsystemsbackend.repository.StudentRepository;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.CharBuffer;
 import java.util.List;
 
 @Service
@@ -49,8 +44,7 @@ public class StudentService {
     @Transactional(readOnly = true)
     public StudentDTO getStudent(Long studentId) {
         Student student = studentRepository.findStudentByStudentNumber(studentId).orElseThrow(() -> new AppException("Student not found ", HttpStatus.NOT_FOUND));
-
-        return studentMapper.toStudentDto(student);
+        return studentMapper.toStudentDTO(student);
     }
 
     @Transactional(readOnly = true)
