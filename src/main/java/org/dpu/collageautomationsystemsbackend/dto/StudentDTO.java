@@ -1,5 +1,7 @@
 package org.dpu.collageautomationsystemsbackend.dto;
 
+import org.dpu.collageautomationsystemsbackend.enums.Role;
+
 import java.util.Date;
 
 public record StudentDTO(
@@ -7,6 +9,7 @@ public record StudentDTO(
         long tc,
         String firstName,
         String lastName,
+        String email,
         String phoneNumber,
         Date birthDate,
         char gender,
@@ -16,7 +19,8 @@ public record StudentDTO(
         String curriculum,
         String studyDurationStatus,
         String tuitionStatus,
-        String password
+        String password,
+        String role
 
 ) {
 }

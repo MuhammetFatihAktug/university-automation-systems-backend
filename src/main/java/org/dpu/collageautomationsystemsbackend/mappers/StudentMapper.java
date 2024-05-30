@@ -12,9 +12,6 @@ import java.util.List;
 public interface StudentMapper {
     StudentDTO toStudentDTO(Student student);
 
-    @Mapping(target = "password", ignore = true)
-    Student signUpToStudent(SignUpDto signUpDto);
-
 
     Student toStudent(StudentDTO studentDTO);
 
