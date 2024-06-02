@@ -2,19 +2,14 @@ package org.dpu.collageautomationsystemsbackend.services;
 
 
 import lombok.RequiredArgsConstructor;
-import org.dpu.collageautomationsystemsbackend.dto.CourseAbsenceDTO;
 import org.dpu.collageautomationsystemsbackend.dto.StudentCourseDTO;
 import org.dpu.collageautomationsystemsbackend.entities.student.Course;
-import org.dpu.collageautomationsystemsbackend.entities.student.CourseAbsence;
 import org.dpu.collageautomationsystemsbackend.entities.student.Student;
 import org.dpu.collageautomationsystemsbackend.entities.student.StudentCourse;
 import org.dpu.collageautomationsystemsbackend.exception.AppException;
-import org.dpu.collageautomationsystemsbackend.mappers.CourseAbsenceMapper;
 import org.dpu.collageautomationsystemsbackend.mappers.StudentCourseMapper;
 import org.dpu.collageautomationsystemsbackend.mappers.StudentMapper;
-import org.dpu.collageautomationsystemsbackend.repository.CourseRepository;
 import org.dpu.collageautomationsystemsbackend.repository.StudentCourseRepository;
-import org.dpu.collageautomationsystemsbackend.repository.StudentRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -91,7 +86,6 @@ public class StudentCourseService {
             Course course = courseService.getCourseById(courseCode);
 
             StudentCourse studentCourse = studentCourseMapper.toStudentCourse(studentCourseDTO);
-
             studentCourse.setStudent(student);
             studentCourse.setCourse(course);
 

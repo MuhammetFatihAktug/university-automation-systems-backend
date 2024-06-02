@@ -12,6 +12,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
 import java.util.Set;
 
 
@@ -33,7 +34,7 @@ public class StudentCourse {
     private Student student;
 
     @ManyToOne
-    @JoinColumn(name = "course_code", nullable = false,unique = true)
+    @JoinColumn(name = "course_code", nullable = false)
     private Course course;
 
     @Column(name = "midterm", nullable = false)
@@ -53,5 +54,8 @@ public class StudentCourse {
 
     @Column(name = "status", nullable = false, length = 15)
     private String status;
+
+    @Temporal(TemporalType.DATE)
+    private String createdDate;
 
 }

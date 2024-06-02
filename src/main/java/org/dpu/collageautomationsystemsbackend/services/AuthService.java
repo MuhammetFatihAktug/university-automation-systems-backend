@@ -45,15 +45,14 @@ public class AuthService {
                 .orElseThrow();
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
-
+        revokeAllUserTokens(user);
+        saveUserToken(user, jwtToken);
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
                 .build();
 
     }
-
-
     public void refreshToken(
             HttpServletRequest request,
             HttpServletResponse response

@@ -9,8 +9,6 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring", uses = {StudentMapper.class, CourseMapper.class})
 public interface StudentCourseMapper {
 
-    StudentCourseDTO toStudentCourseDTO(StudentCourse studentCourse);
-
     StudentCourse toStudentCourse(StudentCourseDTO studentCourseDTO);
 
     @Mapping(target = "id", ignore = true) // Ensure the id is not changed

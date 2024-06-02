@@ -17,7 +17,7 @@ import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:4200", "http://192.168.1.6:8080"})
+@CrossOrigin(origins = {"http://localhost:4200", "http://192.168.56.1:8080","http://192.168.56.1:4200"})
 public class AuthController {
 
     private final ManagerService managerService;
@@ -25,7 +25,6 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> login(@RequestBody AuthenticationRequest authenticationRequest) {
-
         return ResponseEntity.ok(authService.login(authenticationRequest));
     }
 

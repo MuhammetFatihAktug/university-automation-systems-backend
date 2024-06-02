@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -32,18 +33,17 @@ public class StudentService {
 
     @Transactional
     public Student updateStudent(Long studentId, StudentDTO studentDTO) {
-
-        Student student = studentRepository.findById(studentId)
+        Student existingStudent = studentRepository.findById(studentId)
                 .orElseThrow(() -> new AppException("Student not found with id: " + studentId, HttpStatus.NOT_FOUND));
 
-        student = studentMapper.toStudent(studentDTO);
-
-        return studentRepository.save(student);
+        studentMapper.updateStudentFromDto(studentDTO, existingStudent);
+        return studentRepository.save(existingStudent);
     }
 
     @Transactional(readOnly = true)
     public StudentDTO getStudent(Long studentId) {
-        Student student = studentRepository.findStudentByStudentNumber(studentId).orElseThrow(() -> new AppException("Student not found ", HttpStatus.NOT_FOUND));
+        Student student = studentRepository.findStudentByStudentNumber(studentId)
+                .orElseThrow(() -> new AppException("Student not found", HttpStatus.NOT_FOUND));
         return studentMapper.toStudentDTO(student);
     }
 
@@ -51,5 +51,12 @@ public class StudentService {
     public List<StudentDTO> getAllStudents() {
         List<Student> students = studentRepository.findAll();
         return studentMapper.toStudentDTO(students);
+    }
+
+    @Transactional(readOnly = true)
+    public StudentDTO getStudentByEmail(String email) {
+        return studentRepository.findByEmail(email)
+                .map(studentMapper::toStudentDTO)
+                .orElseThrow(() -> new AppException("Student not found", HttpStatus.NOT_FOUND));
     }
 }

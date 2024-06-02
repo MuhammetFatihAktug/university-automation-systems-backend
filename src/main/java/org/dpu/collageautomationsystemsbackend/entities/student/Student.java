@@ -65,8 +65,10 @@ public class Student implements UserDetails {
     @OneToMany(mappedBy = "student")
     private Set<StudentCourse> studentCourses;
 
+    @JsonIgnore
     private String password;
 
+    @JsonIgnore
     @Enumerated(EnumType.STRING)
     private Role role;
 

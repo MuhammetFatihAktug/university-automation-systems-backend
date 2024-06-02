@@ -1,7 +1,5 @@
 package org.dpu.collageautomationsystemsbackend.dto;
 
-import org.dpu.collageautomationsystemsbackend.enums.Role;
-
 import java.util.Date;
 
 public record StudentDTO(

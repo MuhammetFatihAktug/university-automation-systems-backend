@@ -34,7 +34,7 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests((requests) -> requests
-                        .requestMatchers(HttpMethod.POST, "/login", "/register").permitAll()
+                        .requestMatchers("/login", "/register", "/absences/**", "/courses/**", "/students/**", "/studentCourses/**").permitAll()
                         .anyRequest().authenticated())
         ;
         return http.build();

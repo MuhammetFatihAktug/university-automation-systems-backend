@@ -1,5 +1,7 @@
 package org.dpu.collageautomationsystemsbackend.dto;
 
+import java.util.Date;
+
 public record StudentCourseDTO(
         int id,
         StudentDTO student,
@@ -9,6 +11,6 @@ public record StudentCourseDTO(
         int makeup,
         int average,
         String letterGrade,
-        String status
-) {
+        String status,
+        String createdDate) {
 }
