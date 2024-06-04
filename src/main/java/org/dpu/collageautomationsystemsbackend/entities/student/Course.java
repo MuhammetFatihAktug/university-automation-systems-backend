@@ -6,8 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -22,7 +20,6 @@ public class Course {
 
     @Column(name = "semester", nullable = false)
     private int semester;
-
     @Column(name = "name", nullable = false, length = 50)
     private String name;
 

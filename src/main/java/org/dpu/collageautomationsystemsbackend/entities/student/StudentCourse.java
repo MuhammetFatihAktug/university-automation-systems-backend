@@ -38,16 +38,16 @@ public class StudentCourse {
     private Course course;
 
     @Column(name = "midterm", nullable = false)
-    private int midterm;
+    private Long midterm;
 
     @Column(name = "final", nullable = false)
-    private int finalExam;
+    private Long finalExam;
 
     @Column(name = "makeup", nullable = false)
-    private int makeup;
+    private Long makeup;
 
     @Column(name = "average", nullable = false)
-    private int average;
+    private Long average;
 
     @Column(name = "letter_grade", nullable = false)
     private String letterGrade;

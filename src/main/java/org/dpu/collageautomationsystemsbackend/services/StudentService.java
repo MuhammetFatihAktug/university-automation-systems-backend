@@ -2,6 +2,7 @@ package org.dpu.collageautomationsystemsbackend.services;
 
 import lombok.RequiredArgsConstructor;
 import org.dpu.collageautomationsystemsbackend.dto.StudentDTO;
+import org.dpu.collageautomationsystemsbackend.entities.student.Gpa;
 import org.dpu.collageautomationsystemsbackend.entities.student.Student;
 import org.dpu.collageautomationsystemsbackend.exception.AppException;
 import org.dpu.collageautomationsystemsbackend.mappers.StudentMapper;
@@ -11,7 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +22,7 @@ public class StudentService {
 
     private final StudentRepository studentRepository;
     private final StudentMapper studentMapper;
+    private final GpaService gpaService;
 
     @Transactional
     public Student createStudent(StudentDTO studentDTO) {
@@ -58,5 +62,18 @@ public class StudentService {
         return studentRepository.findByEmail(email)
                 .map(studentMapper::toStudentDTO)
                 .orElseThrow(() -> new AppException("Student not found", HttpStatus.NOT_FOUND));
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Double> getStudentGpa(Long studentId) {
+        List<Gpa> gpaList = gpaService.getGpaByStudent(studentId);
+        return gpaList.stream()
+                .collect(Collectors.toMap(Gpa::getCreatedDate, Gpa::getGpa, (existing, replacement) -> existing));
+    }
+
+    @Transactional(readOnly = true)
+    public Double getStudentGpaForDate(Long studentId, String createdDate) {
+        Gpa gpa = gpaService.getGpaByStudentAndCreatedDate(studentId, createdDate);
+        return gpa != null ? gpa.getGpa() : null;
     }
 }

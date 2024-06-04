@@ -14,5 +14,7 @@ public interface StudentCourseRepository extends JpaRepository<StudentCourse, Lo
 
     Optional<StudentCourse> findByStudentAndCourse(Student student, Course course);
 
+    List<StudentCourse> findByStudentAndCreatedDate(Student student, String createdDate);
+
 
 }

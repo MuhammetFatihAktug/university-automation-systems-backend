@@ -8,9 +8,7 @@ import org.dpu.collageautomationsystemsbackend.entities.student.CourseAbsence;
 import org.dpu.collageautomationsystemsbackend.entities.student.Student;
 import org.dpu.collageautomationsystemsbackend.entities.student.StudentCourse;
 import org.dpu.collageautomationsystemsbackend.exception.AppException;
-import org.dpu.collageautomationsystemsbackend.services.CourseAbsenceService;
-import org.dpu.collageautomationsystemsbackend.services.StudentCourseService;
-import org.dpu.collageautomationsystemsbackend.services.StudentService;
+import org.dpu.collageautomationsystemsbackend.services.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
@@ -18,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -30,6 +29,7 @@ public class UserController {
     private final StudentCourseService studentCourseService;
     private final CourseAbsenceService courseAbsenceService;
     private final JwtService jwtService;
+    private final GpaService gpaService;
 
     @GetMapping("/info")
     public ResponseEntity<StudentDTO> getInfo(HttpServletRequest request) {
@@ -42,6 +42,7 @@ public class UserController {
     public ResponseEntity<List<StudentCourse>> getCourses(HttpServletRequest request) {
         Long studentNumber = getStudentNumberFromRequest(request);
         List<StudentCourse> courses = studentCourseService.getStudentCoursesByStudentId(studentNumber);
+
         return ResponseEntity.ok().body(courses);
     }
 
@@ -51,6 +52,14 @@ public class UserController {
         List<CourseAbsence> courseAbsenceList = courseAbsenceService.getAllAbsences(studentNumber);
         return ResponseEntity.ok().body(courseAbsenceList);
     }
+
+    @GetMapping("/gpa")
+    public ResponseEntity<Map<String, Double>> getAllGPA(HttpServletRequest request) {
+        Long studentNumber = getStudentNumberFromRequest(request);
+        Map<String, Double> gpaMap = studentService.getStudentGpa(studentNumber);
+        return ResponseEntity.ok(gpaMap);
+    }
+
 
     private String extractEmailFromRequest(HttpServletRequest request) {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);

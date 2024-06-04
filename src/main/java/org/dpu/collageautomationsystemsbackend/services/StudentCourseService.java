@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -26,15 +26,18 @@ public class StudentCourseService {
     private final StudentService studentService;
     private final StudentMapper studentMapper;
     private final StudentCourseMapper studentCourseMapper;
+    private final GraderService graderService;
+    private final GpaService gpaService;
 
     @Transactional
     public StudentCourse saveStudentCourse(StudentCourseDTO studentCourseDTO, Long studentId, int courseCode) {
+
         Student student = studentMapper.toStudent(studentService.getStudent(studentId));
         Course course = courseService.getCourseById(courseCode);
         StudentCourse studentCourse = studentCourseMapper.toStudentCourse(studentCourseDTO);
         studentCourse.setStudent(student);
         studentCourse.setCourse(course);
-        return studentCourseRepository.save(studentCourse);
+        return studentCourseRepository.save(graderService.calculateCourseDetails(studentCourse));
     }
 
     @Transactional
@@ -89,9 +92,15 @@ public class StudentCourseService {
             studentCourse.setStudent(student);
             studentCourse.setCourse(course);
 
-            studentCourses.add(studentCourse);
+            studentCourses.add(graderService.calculateCourseDetails(studentCourse));
         }
+        List<StudentCourse> list = studentCourseRepository.saveAll(studentCourses);
+        gpaService.calculateAndSaveGpa(studentId);
+        return list;
+    }
 
-        return studentCourseRepository.saveAll(studentCourses);
+    public List<StudentCourse> findByStudentIdAndCreatedDate(Long studentNumber, String createdDate) {
+        Student student = studentMapper.toStudent(studentService.getStudent(studentNumber));
+        return studentCourseRepository.findByStudentAndCreatedDate(student, createdDate);
     }
 }
