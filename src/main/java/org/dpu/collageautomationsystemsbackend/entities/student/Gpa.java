@@ -24,5 +24,4 @@ public class Gpa {
     private String createdDate;
     private double gpa;
 
-
 }

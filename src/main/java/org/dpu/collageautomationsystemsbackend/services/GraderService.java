@@ -1,19 +1,10 @@
 package org.dpu.collageautomationsystemsbackend.services;
 
 import lombok.RequiredArgsConstructor;
-import org.dpu.collageautomationsystemsbackend.entities.student.Student;
 import org.dpu.collageautomationsystemsbackend.entities.student.StudentCourse;
-import org.dpu.collageautomationsystemsbackend.exception.AppException;
 import org.dpu.collageautomationsystemsbackend.repository.StudentCourseRepository;
 import org.dpu.collageautomationsystemsbackend.repository.StudentRepository;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,47 +21,13 @@ public class GraderService {
         }
 
         String letterGrade = getLetterGrade(average);
-        String status = average >= 60 ? "passed" : "failed";
+        String status = average >= 50 ? "passed" : "failed";
 
         course.setAverage(average);
         course.setLetterGrade(letterGrade);
         course.setStatus(status);
 
         return course;
-    }
-
-
-    public List<Double> calculateGPA(Long studentNumber) {
-        Optional<Student> student = studentRepository.findStudentByStudentNumber(studentNumber);
-        if (student.isPresent()) {
-
-            List<StudentCourse> courses = studentCourseRepository.findByStudent(student.get());
-            Map<String, List<StudentCourse>> groupedCourses = courses.stream()
-                    .collect(Collectors.groupingBy(StudentCourse::getCreatedDate));
-
-            return getGpaList(groupedCourses);
-        }
-        throw new AppException("Student not valid ", HttpStatus.NOT_FOUND);
-    }
-
-    private List<Double> getGpaList(Map<String, List<StudentCourse>> groupedCourses) {
-        List<Double> gpaList = new ArrayList<>();
-
-        for (Map.Entry<String, List<StudentCourse>> entry : groupedCourses.entrySet()) {
-            List<StudentCourse> courseList = entry.getValue();
-            double totalPoints = 0;
-            int totalCredits = 0;
-
-            for (StudentCourse course : courseList) {
-                double points = getGPA(course.getLetterGrade());
-                totalPoints += points * course.getCourse().getCredits();
-                totalCredits += course.getCourse().getCredits();
-            }
-
-            double gpa = totalCredits > 0 ? totalPoints / totalCredits : 0;
-            gpaList.add(gpa);
-        }
-        return gpaList;
     }
 
     private String getLetterGrade(double average) {

@@ -20,7 +20,7 @@ public class Course {
 
     @Column(name = "semester", nullable = false)
     private int semester;
-    @Column(name = "name", nullable = false, length = 50)
+    @Column(name = "name", nullable = false)
     private String name;
 
     @Column(name = "description", nullable = false, columnDefinition = "TEXT")

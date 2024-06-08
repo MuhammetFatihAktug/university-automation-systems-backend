@@ -72,6 +72,18 @@ public class StudentService {
     }
 
     @Transactional(readOnly = true)
+    public Map<String, Double> getStudentGpaSemester(Long studentId) {
+        List<Map<String, Double>> gpaList = gpaService.calculateAndReturnTermGpa(studentId);
+        return gpaList.stream()
+                .flatMap(gpaMap -> gpaMap.entrySet().stream())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        Double::max
+                ));
+    }
+
+    @Transactional(readOnly = true)
     public Double getStudentGpaForDate(Long studentId, String createdDate) {
         Gpa gpa = gpaService.getGpaByStudentAndCreatedDate(studentId, createdDate);
         return gpa != null ? gpa.getGpa() : null;

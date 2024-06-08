@@ -60,6 +60,12 @@ public class UserController {
         return ResponseEntity.ok(gpaMap);
     }
 
+    @GetMapping("/gpa/semester")
+    public ResponseEntity<Map<String, Double>> getGpaSemester(HttpServletRequest request) {
+        Long studentNumber = getStudentNumberFromRequest(request);
+        Map<String, Double> gpaMap = studentService.getStudentGpaSemester(studentNumber);
+        return ResponseEntity.ok(gpaMap);
+    }
 
     private String extractEmailFromRequest(HttpServletRequest request) {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
