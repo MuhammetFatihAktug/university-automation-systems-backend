@@ -22,14 +22,13 @@ import java.util.Optional;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/user")
-@CrossOrigin(origins = {"http://localhost:4200", "http://192.168.56.1:4200"})
+@CrossOrigin(origins = {"http://localhost:4200", "http://192.168.1.2:4200","http://192.168.1.6:4200"})
 public class UserController {
 
     private final StudentService studentService;
     private final StudentCourseService studentCourseService;
     private final CourseAbsenceService courseAbsenceService;
     private final JwtService jwtService;
-    private final GpaService gpaService;
 
     @GetMapping("/info")
     public ResponseEntity<StudentDTO> getInfo(HttpServletRequest request) {

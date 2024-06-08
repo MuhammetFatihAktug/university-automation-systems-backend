@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,9 +24,9 @@ public class StudentService {
     private final GpaService gpaService;
 
     @Transactional
-    public Student createStudent(StudentDTO studentDTO) {
+    public StudentDTO createStudent(StudentDTO studentDTO) {
         Student student = studentMapper.toStudent(studentDTO);
-        return studentRepository.save(student);
+        return studentMapper.toStudentDTO(studentRepository.save(student));
     }
 
     @Transactional
@@ -36,19 +35,15 @@ public class StudentService {
     }
 
     @Transactional
-    public Student updateStudent(Long studentId, StudentDTO studentDTO) {
-        Student existingStudent = studentRepository.findById(studentId)
-                .orElseThrow(() -> new AppException("Student not found with id: " + studentId, HttpStatus.NOT_FOUND));
-
+    public StudentDTO updateStudent(Long studentId, StudentDTO studentDTO) {
+        Student existingStudent = getStudentById(studentId);
         studentMapper.updateStudentFromDto(studentDTO, existingStudent);
-        return studentRepository.save(existingStudent);
+        return studentMapper.toStudentDTO(studentRepository.save(existingStudent));
     }
 
     @Transactional(readOnly = true)
     public StudentDTO getStudent(Long studentId) {
-        Student student = studentRepository.findStudentByStudentNumber(studentId)
-                .orElseThrow(() -> new AppException("Student not found", HttpStatus.NOT_FOUND));
-        return studentMapper.toStudentDTO(student);
+        return studentMapper.toStudentDTO(getStudentById(studentId));
     }
 
     @Transactional(readOnly = true)
@@ -68,7 +63,7 @@ public class StudentService {
     public Map<String, Double> getStudentGpa(Long studentId) {
         List<Gpa> gpaList = gpaService.getGpaByStudent(studentId);
         return gpaList.stream()
-                .collect(Collectors.toMap(Gpa::getCreatedDate, Gpa::getGpa, (existing, replacement) -> existing));
+                .collect(Collectors.toMap(Gpa::getCreatedDate, Gpa::getGpa));
     }
 
     @Transactional(readOnly = true)
@@ -83,9 +78,9 @@ public class StudentService {
                 ));
     }
 
-    @Transactional(readOnly = true)
-    public Double getStudentGpaForDate(Long studentId, String createdDate) {
-        Gpa gpa = gpaService.getGpaByStudentAndCreatedDate(studentId, createdDate);
-        return gpa != null ? gpa.getGpa() : null;
+
+    private Student getStudentById(Long studentId) {
+        return studentRepository.findById(studentId)
+                .orElseThrow(() -> new AppException("Student not found with id: " + studentId, HttpStatus.NOT_FOUND));
     }
 }

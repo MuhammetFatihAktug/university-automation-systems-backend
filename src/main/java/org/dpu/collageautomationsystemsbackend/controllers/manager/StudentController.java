@@ -3,7 +3,6 @@ package org.dpu.collageautomationsystemsbackend.controllers.manager;
 
 import lombok.RequiredArgsConstructor;
 import org.dpu.collageautomationsystemsbackend.dto.StudentDTO;
-import org.dpu.collageautomationsystemsbackend.entities.student.Student;
 import org.dpu.collageautomationsystemsbackend.services.StudentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,25 +18,25 @@ public class StudentController {
 
     private final StudentService studentService;
 
-    @PostMapping("create")
-    public ResponseEntity<Student> createStudent(@RequestBody StudentDTO studentDTO) {
-        Student createdStudent = studentService.createStudent(studentDTO);
+    @PostMapping("/create")
+    public ResponseEntity<StudentDTO> createStudent(@RequestBody StudentDTO studentDTO) {
+        StudentDTO createdStudent = studentService.createStudent(studentDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdStudent);
     }
 
     @DeleteMapping("/{studentId}")
-    public ResponseEntity<Boolean> deleteStudent(@PathVariable Long studentId) {
+    public ResponseEntity<Void> deleteStudent(@PathVariable Long studentId) {
         studentService.deleteStudent(studentId);
-        return ResponseEntity.ok(true);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{studentId}")
-    public ResponseEntity<Student> updateStudent(@PathVariable Long studentId, @RequestBody StudentDTO studentDTO) {
-        Student updatedStudent = studentService.updateStudent(studentId, studentDTO);
+    public ResponseEntity<StudentDTO> updateStudent(@PathVariable Long studentId, @RequestBody StudentDTO studentDTO) {
+        StudentDTO updatedStudent = studentService.updateStudent(studentId, studentDTO);
         return ResponseEntity.ok(updatedStudent);
     }
 
-    @GetMapping("/allStudent")
+    @GetMapping("/all")
     public ResponseEntity<List<StudentDTO>> getAllStudents() {
         List<StudentDTO> students = studentService.getAllStudents();
         return ResponseEntity.ok(students);

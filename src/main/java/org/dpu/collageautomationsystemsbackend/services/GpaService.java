@@ -12,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,37 +27,57 @@ public class GpaService {
 
     @Transactional(readOnly = true)
     public List<Gpa> getGpaByStudent(Long studentNumber) {
-        Student student = studentRepository.findStudentByStudentNumber(studentNumber)
-                .orElseThrow(() -> new AppException("Student not found", HttpStatus.NOT_FOUND));
+        Student student = findStudentByStudentNumber(studentNumber);
         return gpaRepository.findByStudent(student);
     }
 
     @Transactional(readOnly = true)
     public Gpa getGpaByStudentAndCreatedDate(Long studentNumber, String createdDate) {
-        Student student = studentRepository.findStudentByStudentNumber(studentNumber)
-                .orElseThrow(() -> new AppException("Student not found", HttpStatus.NOT_FOUND));
+        Student student = findStudentByStudentNumber(studentNumber);
         return gpaRepository.findByStudentAndCreatedDate(student, createdDate);
     }
 
     @Transactional
     public void calculateAndSaveGpa(Long studentNumber) {
-        Student student = studentRepository.findStudentByStudentNumber(studentNumber)
-                .orElseThrow(() -> new AppException("Student not found", HttpStatus.NOT_FOUND));
-
+        Student student = findStudentByStudentNumber(studentNumber);
         List<StudentCourse> courses = studentCourseRepository.findByStudent(student);
-        Map<String, List<StudentCourse>> groupedCourses = courses.stream()
-                .collect(Collectors.groupingBy(StudentCourse::getCreatedDate));
 
-        for (Map.Entry<String, List<StudentCourse>> entry : groupedCourses.entrySet()) {
-            Gpa gpaEntity = getGpa(entry, student);
+        Map<String, List<StudentCourse>> groupedCourses = groupCoursesByCreatedDate(courses);
+        groupedCourses.forEach((createdDate, courseList) -> {
+            Gpa gpaEntity = calculateGpa(courseList, student, createdDate);
             gpaRepository.save(gpaEntity);
-        }
+        });
     }
 
+    @Transactional(readOnly = true)
+    public List<Map<String, Double>> calculateAndReturnTermGpa(Long studentNumber) {
+        Student student = findStudentByStudentNumber(studentNumber);
+        List<StudentCourse> courses = studentCourseRepository.findByStudent(student);
 
-    private Gpa getGpa(Map.Entry<String, List<StudentCourse>> entry, Student student) {
-        String createdDate = entry.getKey();
-        List<StudentCourse> courseList = entry.getValue();
+        Map<String, List<StudentCourse>> groupedCourses = groupCoursesByTerm(courses);
+        return groupedCourses.entrySet().stream()
+                .map(entry -> calculateTermGpa(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
+    }
+
+    private Student findStudentByStudentNumber(Long studentNumber) {
+        return studentRepository.findStudentByStudentNumber(studentNumber)
+                .orElseThrow(() -> new AppException("Student not found", HttpStatus.NOT_FOUND));
+    }
+
+    private Map<String, List<StudentCourse>> groupCoursesByCreatedDate(List<StudentCourse> courses) {
+        return courses.stream()
+                .collect(Collectors.groupingBy(StudentCourse::getCreatedDate));
+    }
+
+    private Map<String, List<StudentCourse>> groupCoursesByTerm(List<StudentCourse> courses) {
+        return courses.stream()
+                .collect(Collectors.groupingBy(course ->
+                        course.getCreatedDate() + "_" + (course.getCourse().getSemester() == 1 ? "Guz" : "Bahar")
+                ));
+    }
+
+    private Gpa calculateGpa(List<StudentCourse> courseList, Student student, String createdDate) {
         double totalPoints = 0;
         int totalCredits = 0;
 
@@ -76,52 +95,26 @@ public class GpaService {
         return gpaEntity;
     }
 
-
-    @Transactional(readOnly = true)
-    public List<Map<String, Double>> calculateAndReturnTermGpa(Long studentNumber) {
-        Student student = studentRepository.findStudentByStudentNumber(studentNumber)
-                .orElseThrow(() -> new AppException("Student not found", HttpStatus.NOT_FOUND));
-
-        List<StudentCourse> courses = studentCourseRepository.findByStudent(student);
-        Map<String, List<StudentCourse>> groupedCourses = courses.stream()
-                .collect(Collectors.groupingBy(studentCourse ->
-                        studentCourse.getCreatedDate() + "_" + (studentCourse.getCourse().getSemester() == 1 ? "Guz" : "Bahar")
-                ));
-
-        return groupedCourses.entrySet().stream()
-                .map(entry -> getTermGpa(entry, student))
-                .collect(Collectors.toList());
-    }
-
-    private Map<String, Double> getTermGpa(Map.Entry<String, List<StudentCourse>> entry, Student student) {
-        String createdDate = entry.getKey();
-        List<StudentCourse> courses = entry.getValue();
-
-        Map<Integer, Double> semesterGpas = new HashMap<>();
+    private Map<String, Double> calculateTermGpa(String term, List<StudentCourse> courses) {
+        Map<Integer, Double> semesterPoints = new HashMap<>();
+        Map<Integer, Integer> semesterCredits = new HashMap<>();
 
         for (StudentCourse course : courses) {
             int semester = course.getCourse().getSemester();
-            double points = getGPA(course.getLetterGrade());
-            double totalPoints = semesterGpas.getOrDefault(semester, 0.0);
-            totalPoints += points * course.getCourse().getCredits();
-            semesterGpas.put(semester, totalPoints);
+            double points = getGPA(course.getLetterGrade()) * course.getCourse().getCredits();
+            semesterPoints.merge(semester, points, Double::sum);
+            semesterCredits.merge(semester, course.getCourse().getCredits(), Integer::sum);
         }
 
-        Map<String, Double> gpaMap = new HashMap<>();
-        for (Map.Entry<Integer, Double> semesterEntry : semesterGpas.entrySet()) {
-            int semester = semesterEntry.getKey();
-            double totalPoints = semesterEntry.getValue();
-            int totalCredits = courses.stream()
-                    .filter(course -> course.getCourse().getSemester() == semester)
-                    .mapToInt(course -> course.getCourse().getCredits())
-                    .sum();
-            double gpa = totalCredits > 0 ? totalPoints / totalCredits : 0;
-            gpaMap.put(createdDate, gpa);
-        }
+        Map<String, Double> termGpaMap = new HashMap<>();
+        semesterPoints.forEach((semester, points) -> {
+            int credits = semesterCredits.getOrDefault(semester, 0);
+            double gpa = credits > 0 ? points / credits : 0;
+            termGpaMap.put(term, gpa);
+        });
 
-        return gpaMap;
+        return termGpaMap;
     }
-
 
     private double getGPA(String letterGrade) {
         return switch (letterGrade) {

@@ -5,25 +5,19 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.dpu.collageautomationsystemsbackend.config.JwtService;
-import org.dpu.collageautomationsystemsbackend.dto.StudentDTO;
-import org.dpu.collageautomationsystemsbackend.dto.StudentCredentialDTO;
 import org.dpu.collageautomationsystemsbackend.entities.auth.AuthenticationRequest;
 import org.dpu.collageautomationsystemsbackend.entities.auth.AuthenticationResponse;
 import org.dpu.collageautomationsystemsbackend.entities.auth.Token;
 import org.dpu.collageautomationsystemsbackend.entities.student.Student;
 import org.dpu.collageautomationsystemsbackend.enums.TokenType;
-import org.dpu.collageautomationsystemsbackend.exception.AppException;
 import org.dpu.collageautomationsystemsbackend.repository.StudentRepository;
 import org.dpu.collageautomationsystemsbackend.repository.TokenRepository;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.nio.CharBuffer;
 
 @Service
 @RequiredArgsConstructor
@@ -33,52 +27,49 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final TokenRepository tokenRepository;
 
-
     public AuthenticationResponse login(AuthenticationRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
-        var user = repository.findByEmail(request.getEmail())
-                .orElseThrow();
+        authenticateUser(request.getEmail(), request.getPassword());
+        var user = findUserByEmail(request.getEmail());
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
         revokeAllUserTokens(user);
         saveUserToken(user, jwtToken);
-        return AuthenticationResponse.builder()
-                .accessToken(jwtToken)
-                .refreshToken(refreshToken)
-                .build();
-
+        return buildAuthenticationResponse(jwtToken, refreshToken);
     }
-    public void refreshToken(
-            HttpServletRequest request,
-            HttpServletResponse response
-    ) throws IOException {
-        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        final String refreshToken;
-        final String userEmail;
+
+    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return;
         }
-        refreshToken = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(refreshToken);
+        String refreshToken = authHeader.substring(7);
+        String userEmail = jwtService.extractUsername(refreshToken);
+
         if (userEmail != null) {
-            var user = this.repository.findByEmail(userEmail)
-                    .orElseThrow();
+            var user = findUserByEmail(userEmail);
             if (jwtService.isTokenValid(refreshToken, user)) {
                 var accessToken = jwtService.generateToken(user);
                 revokeAllUserTokens(user);
                 saveUserToken(user, accessToken);
-                var authResponse = AuthenticationResponse.builder()
-                        .accessToken(accessToken)
-                        .refreshToken(refreshToken)
-                        .build();
+                var authResponse = buildAuthenticationResponse(accessToken, refreshToken);
                 new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
             }
         }
+    }
+
+    private void authenticateUser(String email, String password) {
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, password)
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid email or password", e);
+        }
+    }
+
+    private Student findUserByEmail(String email) {
+        return repository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
     }
 
     private void saveUserToken(Student user, String jwtToken) {
@@ -94,13 +85,19 @@ public class AuthService {
 
     private void revokeAllUserTokens(Student user) {
         var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getStudentNumber());
-        if (validUserTokens.isEmpty())
-            return;
-        validUserTokens.forEach(token -> {
-            token.setExpired(true);
-            token.setRevoked(true);
-        });
-        tokenRepository.saveAll(validUserTokens);
+        if (!validUserTokens.isEmpty()) {
+            validUserTokens.forEach(token -> {
+                token.setExpired(true);
+                token.setRevoked(true);
+            });
+            tokenRepository.saveAll(validUserTokens);
+        }
     }
 
+    private AuthenticationResponse buildAuthenticationResponse(String accessToken, String refreshToken) {
+        return AuthenticationResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
 }

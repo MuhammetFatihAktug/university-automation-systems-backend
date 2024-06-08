@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -18,34 +17,39 @@ public class CourseAbsenceService {
     private final CourseAbsenceRepository courseAbsenceRepository;
     private final StudentCourseService studentCourseService;
 
+    @Transactional(readOnly = true)
     public List<CourseAbsence> getAllAbsences(Long studentNumber) {
         List<StudentCourse> studentCourses = studentCourseService.getStudentCoursesByStudentId(studentNumber);
         return courseAbsenceRepository.findAllByStudentCourses(studentCourses);
     }
 
-    public List<CourseAbsence> getAbsenceByCourse(Long studentNumber, int courseCode) {
+    @Transactional(readOnly = true)
+    public List<CourseAbsence> getAbsencesByCourse(Long studentNumber, int courseCode) {
         StudentCourse studentCourse = studentCourseService.getStudentCourseByStudentId(studentNumber, courseCode);
         return courseAbsenceRepository.findByStudentCourse(studentCourse);
     }
 
+    @Transactional
     public CourseAbsence saveAbsence(CourseAbsence absence, Long studentNumber, int courseCode) {
         StudentCourse studentCourse = studentCourseService.getStudentCourseByStudentId(studentNumber, courseCode);
-
-        Optional<CourseAbsence> optional = courseAbsenceRepository.findByStudentCourseAndDate(studentCourse, absence.getDate());
-        if (optional.isPresent()) {
-            CourseAbsence courseAbsence = optional.get();
-            courseAbsence.setAbsenceStatus(absence.isAbsenceStatus());
-            return courseAbsenceRepository.save(courseAbsence);
-        }
-        absence.setStudentCourse(studentCourse);
-
-
-        return courseAbsenceRepository.save(absence);
+        return courseAbsenceRepository.findByStudentCourseAndDate(studentCourse, absence.getDate())
+                .map(existingAbsence -> updateAbsence(existingAbsence, absence))
+                .orElseGet(() -> createAbsence(absence, studentCourse));
     }
 
     @Transactional
     public void deleteAbsenceByDateAndStudentCourse(Long studentNumber, int courseCode, Date date) {
         StudentCourse studentCourse = studentCourseService.getStudentCourseByStudentId(studentNumber, courseCode);
         courseAbsenceRepository.deleteByStudentCourseAndDate(studentCourse, date);
+    }
+
+    private CourseAbsence updateAbsence(CourseAbsence existingAbsence, CourseAbsence newAbsence) {
+        existingAbsence.setAbsenceStatus(newAbsence.isAbsenceStatus());
+        return courseAbsenceRepository.save(existingAbsence);
+    }
+
+    private CourseAbsence createAbsence(CourseAbsence absence, StudentCourse studentCourse) {
+        absence.setStudentCourse(studentCourse);
+        return courseAbsenceRepository.save(absence);
     }
 }

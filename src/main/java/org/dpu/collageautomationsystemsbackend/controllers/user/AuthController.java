@@ -11,13 +11,14 @@ import org.dpu.collageautomationsystemsbackend.entities.auth.AuthenticationRespo
 import org.dpu.collageautomationsystemsbackend.services.AuthService;
 import org.dpu.collageautomationsystemsbackend.services.ManagerService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:4200", "http://192.168.56.1:8080","http://192.168.56.1:4200"})
+@CrossOrigin(origins = {"http://localhost:4200", "http://192.168.1.2:4200", "http://192.168.1.6:4200"})
 public class AuthController {
 
     private final ManagerService managerService;
@@ -25,21 +26,18 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> login(@RequestBody AuthenticationRequest authenticationRequest) {
-        return ResponseEntity.ok(authService.login(authenticationRequest));
+        AuthenticationResponse response = authService.login(authenticationRequest);
+        return ResponseEntity.ok(response);
     }
-
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody StudentDTO studentDTO) {
-        StudentDTO registeredStudentDTO = managerService.registerStudent(studentDTO);
-        return ResponseEntity.ok("Successfully");
+        managerService.registerStudent(studentDTO);
+        return ResponseEntity.ok("Registration successful");
     }
 
     @PostMapping("/refresh-token")
-    public void refreshToken(
-            HttpServletRequest request,
-            HttpServletResponse response
-    ) throws IOException {
+    public void refreshToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
         authService.refreshToken(request, response);
     }
 

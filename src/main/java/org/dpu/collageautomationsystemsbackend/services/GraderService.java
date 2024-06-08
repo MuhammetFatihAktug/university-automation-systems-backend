@@ -2,26 +2,23 @@ package org.dpu.collageautomationsystemsbackend.services;
 
 import lombok.RequiredArgsConstructor;
 import org.dpu.collageautomationsystemsbackend.entities.student.StudentCourse;
-import org.dpu.collageautomationsystemsbackend.repository.StudentCourseRepository;
-import org.dpu.collageautomationsystemsbackend.repository.StudentRepository;
+
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class GraderService {
-    private final StudentCourseRepository studentCourseRepository;
-    private final StudentRepository studentRepository;
+
+    private static final double MIDTERM_WEIGHT = 0.4;
+    private static final double FINAL_EXAM_WEIGHT = 0.6;
+    private static final double MAKEUP_EXAM_WEIGHT = 0.6;
 
     public StudentCourse calculateCourseDetails(StudentCourse course) {
-        long average;
-        if (course.getFinalExam() < 50) {
-            average = (long) ((course.getMidterm() * 0.4) + (course.getMakeup() * 0.6));
-        } else {
-            average = (long) ((course.getMidterm() * 0.4) + (course.getFinalExam() * 0.6));
-        }
+        double finalScore = course.getFinalExam() < 50 ? course.getMakeup() : course.getFinalExam();
+        long average = Math.round((course.getMidterm() * MIDTERM_WEIGHT) + (finalScore * FINAL_EXAM_WEIGHT));
 
         String letterGrade = getLetterGrade(average);
-        String status = average >= 50 ? "passed" : "failed";
+        String status = average >= 50 ? "Basarili" : "Basarisiz";
 
         course.setAverage(average);
         course.setLetterGrade(letterGrade);

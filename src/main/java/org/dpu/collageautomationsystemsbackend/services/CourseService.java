@@ -15,24 +15,23 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class CourseService {
+
     private final CourseRepository courseRepository;
     private final CourseMapper courseMapper;
 
     public Course saveCourse(CourseDTO courseDTO) {
-
-        Course existingCourse = courseRepository.findCourseByCourseCode(courseDTO.courseCode()).orElse(null);
-        if (existingCourse != null) {
+        courseRepository.findCourseByCourseCode(courseDTO.courseCode()).ifPresent(course -> {
             throw new AppException("Course already exists", HttpStatus.BAD_REQUEST);
-        }
+        });
 
         Course newCourse = courseMapper.toCourse(courseDTO);
         return courseRepository.save(newCourse);
     }
+
     public List<Course> saveAllCourses(List<CourseDTO> courseDTOs) {
         List<Course> courses = courseDTOs.stream()
                 .map(courseMapper::toCourse)
                 .collect(Collectors.toList());
-
         return courseRepository.saveAll(courses);
     }
 
@@ -47,9 +46,8 @@ public class CourseService {
 
     public Course updateCourse(int courseCode, CourseDTO courseDTO) {
         Course existingCourse = getCourseById(courseCode);
-        Course updatedCourse = courseMapper.toCourse(courseDTO);
-        updatedCourse.setCourseCode(existingCourse.getCourseCode());
-        return courseRepository.save(updatedCourse);
+        courseMapper.updateCourseFromDTO(courseDTO, existingCourse);
+        return courseRepository.save(existingCourse);
     }
 
     public void deleteCourse(int courseCode) {

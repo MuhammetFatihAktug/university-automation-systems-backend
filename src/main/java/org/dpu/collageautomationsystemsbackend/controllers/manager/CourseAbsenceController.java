@@ -2,14 +2,14 @@ package org.dpu.collageautomationsystemsbackend.controllers.manager;
 
 import lombok.RequiredArgsConstructor;
 import org.dpu.collageautomationsystemsbackend.entities.student.CourseAbsence;
+import org.dpu.collageautomationsystemsbackend.entities.student.CourseAbsenceRequest;
 import org.dpu.collageautomationsystemsbackend.services.CourseAbsenceService;
-import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/absences")
@@ -19,27 +19,33 @@ public class CourseAbsenceController {
 
     private final CourseAbsenceService courseAbsenceService;
 
-    @GetMapping("/{studentNumber}/all")
-    public List<CourseAbsence> getAllAbsences(@PathVariable("studentNumber") Long studentNumber) {
-        return courseAbsenceService.getAllAbsences(studentNumber);
+    @PostMapping("/save")
+    public ResponseEntity<CourseAbsence> createAbsence(@RequestBody CourseAbsenceRequest  request) {
+        CourseAbsence absence = new CourseAbsence();
+        absence.setDate(request.getDate());
+        absence.setAbsenceStatus(request.isAbsenceStatus());
+
+        CourseAbsence savedAbsence = courseAbsenceService.saveAbsence(absence, request.getStudentNumber(), request.getCourseCode());
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedAbsence);
     }
 
-    @GetMapping("/{studentNumber}/course")
-    public ResponseEntity<List<CourseAbsence>> getAbsenceByCourse(@RequestParam("courseCode") int courseCode, @PathVariable("studentNumber") Long studentNumber) {
-        List<CourseAbsence> absence = courseAbsenceService.getAbsenceByCourse(studentNumber, courseCode);
-        return ResponseEntity.ok(absence);
+    @PostMapping("/saveAll")
+    public ResponseEntity<List<CourseAbsence>> createAbsences(@RequestBody List<CourseAbsenceRequest> requests) {
+        List<CourseAbsence> savedAbsences = new ArrayList<>();
+        for (CourseAbsenceRequest request : requests) {
+            CourseAbsence absence = new CourseAbsence();
+            absence.setDate(request.getDate());
+            absence.setAbsenceStatus(request.isAbsenceStatus());
+
+            CourseAbsence savedAbsence = courseAbsenceService.saveAbsence(absence, request.getStudentNumber(), request.getCourseCode());
+            savedAbsences.add(savedAbsence);
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedAbsences);
     }
 
-    @PostMapping("/{studentNumber}/save")
-    public CourseAbsence createAbsence(@PathVariable("studentNumber") Long studentNumber, @RequestParam("courseCode") int courseCode, @RequestBody CourseAbsence absence) {
-        return courseAbsenceService.saveAbsence(absence, studentNumber, courseCode);
-    }
-
-
-    @DeleteMapping("/{studentNumber}/delete/course")
-    public ResponseEntity<Void> deleteAbsence(@PathVariable("studentNumber") Long studentNumber, @RequestParam("courseCode") int courseCode, @RequestParam("date") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date date) {
-
-        courseAbsenceService.deleteAbsenceByDateAndStudentCourse(studentNumber, courseCode, date);
+    @DeleteMapping("/delete")
+    public ResponseEntity<Void> deleteAbsence(@RequestBody CourseAbsenceRequest request) {
+        courseAbsenceService.deleteAbsenceByDateAndStudentCourse(request.getStudentNumber(), request.getCourseCode(), request.getDate());
         return ResponseEntity.noContent().build();
     }
 }

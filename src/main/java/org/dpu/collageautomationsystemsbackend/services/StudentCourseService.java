@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -31,24 +32,25 @@ public class StudentCourseService {
 
     @Transactional
     public StudentCourse saveStudentCourse(StudentCourseDTO studentCourseDTO, Long studentId, int courseCode) {
-
-        Student student = studentMapper.toStudent(studentService.getStudent(studentId));
+        Student student = getStudentById(studentId);
         Course course = courseService.getCourseById(courseCode);
+
         StudentCourse studentCourse = studentCourseMapper.toStudentCourse(studentCourseDTO);
         studentCourse.setStudent(student);
         studentCourse.setCourse(course);
+
         return studentCourseRepository.save(graderService.calculateCourseDetails(studentCourse));
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<StudentCourse> getStudentCoursesByStudentId(Long studentId) {
-        Student student = studentMapper.toStudent(studentService.getStudent(studentId));
+        Student student = getStudentById(studentId);
         return studentCourseRepository.findByStudent(student);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public StudentCourse getStudentCourseByStudentId(Long studentId, int courseCode) {
-        Student student = studentMapper.toStudent(studentService.getStudent(studentId));
+        Student student = getStudentById(studentId);
         Course course = courseService.getCourseById(courseCode);
 
         return studentCourseRepository.findByStudentAndCourse(student, course)
@@ -60,47 +62,46 @@ public class StudentCourseService {
         StudentCourse existingStudentCourse = getStudentCourseByStudentId(studentId, courseCode);
 
         studentCourseMapper.updateStudentCourseFromDTO(studentCourseDTO, existingStudentCourse);
-
-
         return studentCourseRepository.save(existingStudentCourse);
     }
 
     @Transactional
     public void deleteStudentCourse(Long studentId, int courseCode) {
-        Student student = studentMapper.toStudent(studentService.getStudent(studentId));
+        Student student = getStudentById(studentId);
         Course course = courseService.getCourseById(courseCode);
 
-        Optional<StudentCourse> studentCourse = studentCourseRepository.findByStudentAndCourse(student, course);
-        studentCourse.ifPresentOrElse(
-                studentCourseRepository::delete,
-                () -> {
-                    throw new AppException("StudentCourse not found with studentId: " + studentId + " and courseCode: " + courseCode, HttpStatus.NOT_FOUND);
-                }
-        );
+        studentCourseRepository.findByStudentAndCourse(student, course)
+                .ifPresentOrElse(
+                        studentCourseRepository::delete,
+                        () -> {
+                            throw new AppException("StudentCourse not found with studentId: " + studentId + " and courseCode: " + courseCode, HttpStatus.NOT_FOUND);
+                        }
+                );
     }
 
     @Transactional
     public List<StudentCourse> saveAllStudentCourses(List<StudentCourseDTO> studentCourseDTOs, Long studentId) {
-        Student student = studentMapper.toStudent(studentService.getStudent(studentId));
-        List<StudentCourse> studentCourses = new ArrayList<>();
+        Student student = getStudentById(studentId);
+        List<StudentCourse> studentCourses = studentCourseDTOs.stream()
+                .map(studentCourseDTO -> {
+                    int courseCode = studentCourseDTO.course().courseCode();
+                    Course course = courseService.getCourseById(courseCode);
 
-        for (StudentCourseDTO studentCourseDTO : studentCourseDTOs) {
-            int courseCode = studentCourseDTO.course().courseCode();
-            Course course = courseService.getCourseById(courseCode);
+                    StudentCourse studentCourse = studentCourseMapper.toStudentCourse(studentCourseDTO);
+                    Student student1 = studentCourse.getStudent();
+                    studentCourse.setStudent(student);
+                    studentCourse.setCourse(course);
 
-            StudentCourse studentCourse = studentCourseMapper.toStudentCourse(studentCourseDTO);
-            studentCourse.setStudent(student);
-            studentCourse.setCourse(course);
+                    return graderService.calculateCourseDetails(studentCourse);
+                })
+                .collect(Collectors.toList());
 
-            studentCourses.add(graderService.calculateCourseDetails(studentCourse));
-        }
-        List<StudentCourse> list = studentCourseRepository.saveAll(studentCourses);
+        List<StudentCourse> savedCourses = studentCourseRepository.saveAll(studentCourses);
         gpaService.calculateAndSaveGpa(studentId);
-        return list;
+        return savedCourses;
     }
 
-    public List<StudentCourse> findByStudentIdAndCreatedDate(Long studentNumber, String createdDate) {
-        Student student = studentMapper.toStudent(studentService.getStudent(studentNumber));
-        return studentCourseRepository.findByStudentAndCreatedDate(student, createdDate);
+    private Student getStudentById(Long studentId) {
+        return studentMapper.toStudent(studentService.getStudent(studentId));
     }
 }
