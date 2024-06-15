@@ -31,6 +31,11 @@ mvn clean install
 mvn spring-boot:run
 ```
 
+## Database Schema
+
+Below is the schema design for the PostgreSQL database used in this project:
+![Screenshot 0](src/main/resources/static/db.PNG)
+
 # API Usage
 
 ## User Registration
